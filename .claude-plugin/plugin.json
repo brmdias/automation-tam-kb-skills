@@ -1,0 +1,16 @@
+{
+  "name": "automation-tam-kb-skills",
+  "version": "0.3.0",
+  "description": "PagerDuty Rundeck TAM knowledge base skills: /investigate customer issues, /best-practice authoring, /share-kb to Confluence, and Mermaid diagrams.",
+  "author": {
+    "name": "Bruno Dias",
+    "email": "bdias@pagerduty.com"
+  },
+  "keywords": [
+    "pagerduty",
+    "rundeck",
+    "tam",
+    "runbook-automation",
+    "knowledge-base"
+  ]
+}

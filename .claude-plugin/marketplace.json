@@ -1,0 +1,15 @@
+{
+  "name": "automation-tam-kb-marketplace",
+  "owner": {
+    "name": "Bruno Dias",
+    "email": "bdias@pagerduty.com"
+  },
+  "description": "Marketplace for the PagerDuty Rundeck TAM knowledge base skills.",
+  "plugins": [
+    {
+      "name": "automation-tam-kb-skills",
+      "source": "./",
+      "description": "TAM workflow skills: customer investigation, best-practice authoring, Confluence sharing, and Mermaid diagrams."
+    }
+  ]
+}
