@@ -8,7 +8,7 @@ Skills: `investigate`, `best-practice`, `share-kb`, `tam-kb-setup`, `mermaid-dia
 
 Claude Code:
 ```
-/plugin marketplace add https://github.com/PagerDuty/automation-tam-kb-skills
+/plugin marketplace add https://github.com/brmdias/automation-tam-kb-skills
 /plugin install automation-tam-kb-skills@automation-tam-kb-marketplace
 ```
 Claude Desktop (Cowork): add this repo as a marketplace in plugin settings, then install.
