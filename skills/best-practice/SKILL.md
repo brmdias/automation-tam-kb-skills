@@ -28,7 +28,7 @@ Executes the complete best practice documentation workflow:
 3. **Search documentation** - Find official guidance and version information
 4. **Search product code** - Verify technical details and defaults (when relevant)
 5. **Search GitHub** - Find community issues, bugs, and feature requests
-6. **Search Jira** - Locate internal development tickets and fix versions
+6. **Search Jira and Salesforce Cases** - Locate internal development tickets, fix versions, and customer impact from Support Cases
 7. **Community search** - WebFetch external sources if needed (optional)
 8. **Synthesize findings** - Present research summary for user confirmation
 9. **Generate document** - Create best practice following TEMPLATE.md structure
@@ -150,6 +150,25 @@ maxResults: 15
 
 **Error handling:** If the Jira connector is unavailable, note "Jira search unavailable" and continue.
 
+**Salesforce Support Cases (customer impact):**
+
+Every customer case is created in Salesforce Support Cases, so search them alongside Jira to see how many customers the topic affects. Query Salesforce through the Runlayer connector. Call `search_tools` to locate the Salesforce SOQL/query tool, then `execute_tool` with the exact tool_name and arguments returned. Do not guess tool names. The `Case` object holds all PagerDuty support, so always filter to Rundeck cases with `RecordType.Name = 'Rundeck Management Case'`. Jira links live in `Associated_Jira_Ticket__c`, and `Description` cannot be filtered in SOQL. Use queries equivalent to:
+
+```bash
+# Cases linked to the RUN tickets found above
+soql: "SELECT JiraTicketNumber__c, Case_ID__c, Case_ID__r.IsClosed, Case_ID__r.Account.Name FROM Associated_Jira_Ticket__c WHERE JiraTicketNumber__c IN ('RUN-1234') AND Case_ID__r.RecordType.Name = 'Rundeck Management Case'"
+# Cases matching the keywords
+soql: "SELECT CaseNumber, Subject, Status, IsClosed, CreatedDate, Account.Name FROM Case WHERE RecordType.Name = 'Rundeck Management Case' AND Subject LIKE '%<keywords>%' ORDER BY CreatedDate DESC LIMIT 15"
+```
+
+**Collect and note:**
+- Total cases and distinct accounts affected (the impact signal)
+- Open vs closed, and date range
+- Case numbers for citation, linked to Jira keys when a case mentions one
+- Do not copy case bodies, contact names, or emails
+
+**Error handling:** If the Salesforce connector is unavailable, note "Salesforce Cases search unavailable" and continue.
+
 ### Step 8: Community Search (Optional/As-Needed)
 
 **Trigger when:**
@@ -199,6 +218,7 @@ Analyze all research findings:
 - Documentation: N pages
 - GitHub: P issues
 - Jira: Q tickets
+- Salesforce Cases: R cases across M accounts
 - Community: [if searched]
 
 ## Recommended Approach
@@ -306,6 +326,7 @@ Read file_path="best-practices/TEMPLATE.md"
 - Links to docs repo files
 - GitHub issues by number
 - Jira tickets by key
+- Salesforce case counts only (e.g. "12 cases across 8 accounts"); no case numbers or account names in the document
 - Official website links
 
 3. **Quality checks before writing:**
@@ -397,6 +418,7 @@ Provide comprehensive completion summary:
 - Documentation: N pages
 - GitHub: P issues
 - Jira: Q tickets
+- Salesforce Cases: R cases across M accounts
 - Community: [if searched]
 - **Total sources:** [count]
 
@@ -442,6 +464,7 @@ If this was an update instead of creation:
 - Cite specific file paths for code/doc references
 - Link to GitHub issues by number (#1234)
 - Link to Jira tickets by key (RUN-1234)
+- Report Salesforce Case impact as counts (cases, distinct accounts); keep customer names out of best-practice documents
 - Verify community claims against official sources
 - Flag unverified or conflicting information
 
@@ -511,7 +534,7 @@ Choose option (1-3):
 ```
 
 ### External Tracker Failures
-- Note in synthesis summary: "GitHub search unavailable" or "Jira search failed"
+- Note in synthesis summary: "GitHub search unavailable", "Jira search failed", or "Salesforce Cases search unavailable"
 - Continue with available sources
 - Flag in completion: "Note: [source] was unavailable, recommend manual verification"
 

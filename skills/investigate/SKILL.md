@@ -1,6 +1,6 @@
 ---
 name: investigate
-description: Run full investigation workflow for customer issue - searches knowledge base, documentation, code, and external trackers, then recommends test environment
+description: Run full investigation workflow for customer issue - searches knowledge base, documentation, code, and external trackers (GitHub, Jira, Salesforce Support Cases for customer impact), then recommends test environment
 user_invocable: true
 ---
 
@@ -26,7 +26,7 @@ Executes the full investigation workflow from CLAUDE.md:
 2. **Search knowledge base** - Find similar investigations and best practices
 3. **Check documentation** - Verify if behavior is documented
 4. **Verify in code** - Search product source for actual behavior
-5. **Check external trackers** - Search GitHub issues and Jira for known bugs/development
+5. **Check external trackers** - Search GitHub issues and Jira for known bugs/development, and Salesforce Support Cases to measure how many customers the issue affects
 6. **Recommend test environment** - Suggest appropriate sandbox based on issue type
 7. **Summarize findings** - Provide structured summary with references
 8. **Document investigation** - Create new investigation file in investigations/ using template
@@ -107,6 +107,24 @@ For each relevant result:
 - Check if fixed in specific version
 - Note any workarounds mentioned
 
+**Salesforce Support Cases - customer impact (via Runlayer connector):**
+
+All customer cases are created in Salesforce Support Cases, so search them alongside Jira to measure how many customers the issue affects. Call `search_tools` to locate the Salesforce query/find tool, then `execute_tool` with the exact tool_name and arguments returned. Do not guess tool names.
+
+Run two queries (verified field names; the `Case` object holds all PagerDuty support, so always filter to Rundeck cases with `RecordType.Name = 'Rundeck Management Case'`):
+
+1. **Cases linked to the Jira issues found above.** Jira links live in the `Associated_Jira_Ticket__c` object, not on `Case` (`Case.Jira_Ticket_ID__c` is almost never filled):
+`SELECT JiraTicketNumber__c, Status__c, Case_ID__c, Case_ID__r.CaseNumber, Case_ID__r.Subject, Case_ID__r.Status, Case_ID__r.IsClosed, Case_ID__r.CreatedDate, Case_ID__r.Account.Name FROM Associated_Jira_Ticket__c WHERE JiraTicketNumber__c IN ('RUN-1234', ...) AND Case_ID__r.RecordType.Name = 'Rundeck Management Case'`
+2. **Cases matching the keywords.** `Description` cannot be filtered in SOQL, so filter on `Subject` (use the connector's SOSL/find tool when you need body text):
+`SELECT CaseNumber, Subject, Status, Priority, Severity__c, Category__c, CreatedDate, IsClosed, Account.Name FROM Case WHERE RecordType.Name = 'Rundeck Management Case' AND Subject LIKE '%<issue_keywords>%' ORDER BY CreatedDate DESC LIMIT 25`
+
+Merge both result sets by case number, then compute:
+- Total cases, distinct accounts, open vs closed, and date range
+- Cases per Jira issue (the customer-impact count for each RUN ticket)
+- Whether the current customer already has a case on this issue
+
+Report aggregates plus case numbers and account names in the local summary. Do not copy case bodies, contact names, or emails into the investigation file.
+
 ### Step 7: Recommend Test Environment
 
 Do this only if sandbox environments are available. If not, note: "No sandbox environments available - recommend local WAR for quick reproduction".
@@ -157,6 +175,14 @@ Provide findings in this format:
 ### Jira Issues
 - RUN-<number> - <summary> [status, fix version if applicable]
 
+### Salesforce Support Cases (customer impact)
+- **Impact:** <N> cases across <M> distinct accounts (<X> open, <Y> closed), <first date> to <last date>
+- **This customer:** [has case(s) <case numbers> / no case found]
+
+| Case # | Account | Status | Created | Linked Jira |
+| --- | --- | --- | --- | --- |
+| <case number> | <account> | <status> | <date> | RUN-<number> or - |
+
 ## Recommended Test Environment
 **Environment:** [AWS EKS / AWS EC2 / Local WAR / PDT-RDTAM]
 **Reason:** [database type / issue specifics / testing needs]
@@ -205,6 +231,7 @@ Provide findings in this format:
 - Note the tool failure
 - Continue with available information
 - Suggest manual check: "GitHub search failed - manually check rundeck/rundeck issues"
+- For Salesforce: note "Salesforce Cases search unavailable - impact unknown" and suggest "manually search Support Cases for <issue_keywords>"
 
 **If ambiguous issue description:**
 - Make best effort with available keywords

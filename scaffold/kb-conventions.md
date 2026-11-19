@@ -25,13 +25,13 @@ Lowercase, hyphenated. Customers `company-name.md`; investigations
 ## Configuration
 
 Per-user settings live in `.tam-kb/config.yml` (written by `/tam-kb-setup`): Confluence
-space, Jira project, GitHub repos, connector mode, and KB paths. Skills read config
-rather than hardcoding these values. The presence of `.tam-kb/config.yml` marks the KB
+space, Jira project, GitHub repos, connector mode, and KB paths.
+Skills read config rather than hardcoding these values. The presence of `.tam-kb/config.yml` marks the KB
 root. If it is missing, run `/tam-kb-setup` first.
 
 ## Connectors
 
-External systems (Jira, Confluence, GitHub, PagerDuty) are reached through connectors.
+External systems (Jira, Salesforce, Confluence, GitHub, PagerDuty) are reached through connectors.
 When `connectors.mode` is `runlayer` (default in Cowork), discover the tool with
 `search_tools` then call `execute_tool` — do not assume `mcp__atlassian__*` tool names
 and do not shell out to the `gh` CLI. When `connectors.mode` is `direct-mcp`, the direct
@@ -41,7 +41,8 @@ MCP tools may be used instead.
 
 Search order for answering a question: knowledge base (`investigations/`,
 `best-practices/`, `customers/`) → generated/known job definitions → official docs →
-product source (if `repositories/` present) → GitHub issues / Jira. Always cite sources
+product source (if `repositories/` present) → GitHub issues / Jira → Salesforce Support
+Cases (customer impact: case and distinct-account counts). Always cite sources
 and file paths. Update the relevant `INDEX.md` when adding a document.
 
 ## Confidentiality
